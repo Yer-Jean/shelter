@@ -1,0 +1,12 @@
+{% extends 'dogs/base.html' %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-12 mb-5">
+            <a href="{% url 'dogs:dog_create' %}" class="btn btn-primary">Создать собаку</a>
+        </div>
+        {% for object in object_list %}
+            {% include 'dogs/includes/inc_category.html' %}
+        {% endfor %}
+    </div>
+{% endblock %}
