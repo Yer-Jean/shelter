@@ -1,8 +1,10 @@
+from django.forms import inlineformset_factory
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 
-from dogs.models import Category, Dog
+from dogs.forms import DogForm, ParentForm
+from dogs.models import Category, Dog, Parent
 
 
 # def index(request):
@@ -35,9 +37,19 @@ class IndexView(TemplateView):
 
 class CategoryListView(ListView):
     model = Category
+    # context_data['category_pk'] = category_item.pk
     extra_context = {
-        'title': 'Питомник - все наши породы'
+        'title': 'Питомник - все наши породы',
+        # 'category_pk': pk
     }
+
+    # def get_context_data(self, *args, **kwargs):
+    #     context_data = super().get_context_data(*args, **kwargs)
+    #
+    #     category_item = Category.objects.get(pk=self.kwargs.get('pk'))
+    #     context_data['category_pk'] = category_item.pk
+    #     print(category_item.pk)
+    #     return context_data
 
 # ПЕРЕОПРЕДЕЛЯЕМ FBV в CBV
 
@@ -74,15 +86,41 @@ class DogCreateView(CreateView):
     fields = ('name', 'category',)
     success_url = reverse_lazy('dogs:categories')
 
+class CategoryDogCreateView(CreateView):
+    model = Dog
+    fields = ('name', 'category',)
+    success_url = reverse_lazy('dogs:categories')
+
 
 class DogUpdateView(UpdateView):
     model = Dog
-    fields = ('name', 'category',)
+    form_class = DogForm
 
-    # success_url = reverse_lazy('dogs:categories')
     # Переопределяем страницу в случае успешного обновления
     def get_success_url(self):
-        return reverse('dogs:category', args=[self.object.category.pk])
+        return reverse('dogs:dog_update', args=[self.kwargs.get('pk')])
+
+    def get_context_data(self, *args, **kwargs):
+        context_data = super().get_context_data(*args, **kwargs)
+
+        ParentFormset = inlineformset_factory(Dog, Parent, form=ParentForm, extra=1)
+        if self.request.method == 'POST':
+            formset = ParentFormset(self.request.POST, instance=self.object)
+        else:
+            formset = ParentFormset(instance=self.object)
+        context_data['formset'] = formset
+
+        return context_data
+
+    def form_valid(self, form):
+        context_data = self.get_context_data()
+        formset = context_data['formset']
+        self.object = form.save()
+        if formset.is_valid():
+            formset.instance = self.object
+            formset.save()
+
+        return super().form_valid(form)
 
 class DogDeleteView(DeleteView):
     model = Dog
