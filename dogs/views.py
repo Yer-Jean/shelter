@@ -67,7 +67,7 @@ class DogListView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(category_id=self.kwargs.get('pk'))
+        queryset = queryset.filter(category_id=self.kwargs.get('pk'), owner=self.request.user)
         return queryset
 
     # Переопределяем экстра-контекст, так как у нас подставляются динамические данные
@@ -83,8 +83,17 @@ class DogListView(ListView):
 
 class DogCreateView(CreateView):
     model = Dog
-    fields = ('name', 'category',)
+    form_class = DogForm
+    # fields = ('name', 'category',)
     success_url = reverse_lazy('dogs:categories')
+
+    def form_valid(self, form):
+        self.object = form.save()
+        self.object.owner = self.request.user
+        self.object.save()
+
+        return super().form_valid(form)
+
 
 class CategoryDogCreateView(CreateView):
     model = Dog
@@ -121,6 +130,7 @@ class DogUpdateView(UpdateView):
             formset.save()
 
         return super().form_valid(form)
+
 
 class DogDeleteView(DeleteView):
     model = Dog

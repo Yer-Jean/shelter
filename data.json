@@ -1,0 +1,104 @@
+[
+  {
+    "model": "dogs.category",
+    "pk": 1,
+    "fields": {
+      "name": "Овчарка",
+      "description": "Большая и пушистая"
+    }
+  },
+  {
+    "model": "dogs.category",
+    "pk": 2,
+    "fields": {
+      "name": "Колли",
+      "description": "Красивая кинозвезда"
+    }
+  },
+  {
+    "model": "dogs.category",
+    "pk": 3,
+    "fields": {
+      "name": "Кинг Чарльз Спаниель",
+      "description": "Очень милая и ленивая порода"
+    }
+  },
+  {
+    "model": "dogs.category",
+    "pk": 4,
+    "fields": {
+      "name": "Чихуахуа",
+      "description": "Концентрация силы"
+    }
+  },
+  {
+    "model": "dogs.dog",
+    "pk": 1,
+    "fields": {
+      "name": "Белый Пушок",
+      "category": 2,
+      "photo": "",
+      "birth_day": null
+    }
+  },
+  {
+    "model": "dogs.dog",
+    "pk": 2,
+    "fields": {
+      "name": "маленькая леди1",
+      "category": 3,
+      "photo": "dogs/king_charles_spaniel.jpg",
+      "birth_day": null
+    }
+  },
+  {
+    "model": "dogs.dog",
+    "pk": 3,
+    "fields": {
+      "name": "Трезор",
+      "category": 1,
+      "photo": "",
+      "birth_day": null
+    }
+  },
+  {
+    "model": "dogs.dog",
+    "pk": 4,
+    "fields": {
+      "name": "Лесси",
+      "category": 2,
+      "photo": "",
+      "birth_day": "2010-11-11"
+    }
+  },
+  {
+    "model": "dogs.dog",
+    "pk": 6,
+    "fields": {
+      "name": "Test",
+      "category": 2,
+      "photo": "",
+      "birth_day": "2020-01-02"
+    }
+  },
+  {
+    "model": "dogs.parent",
+    "pk": 1,
+    "fields": {
+      "dog": 4,
+      "name": "Лесси Старшая",
+      "category": 2,
+      "birth_day": "2001-12-11"
+    }
+  },
+  {
+    "model": "dogs.parent",
+    "pk": 2,
+    "fields": {
+      "dog": 4,
+      "name": "Лесси Дед",
+      "category": 2,
+      "birth_day": "1990-08-10"
+    }
+  }
+]
