@@ -1,4 +1,6 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.forms import inlineformset_factory
+from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
@@ -14,7 +16,7 @@ from dogs.models import Category, Dog, Parent
 #     }
 #     return render(request, 'dogs/index.html', context)
 
-class IndexView(TemplateView):
+class IndexView(LoginRequiredMixin, TemplateView):
     template_name = 'dogs/index.html'
     extra_context = {
         'title': 'Питомник - Главная'
@@ -35,7 +37,7 @@ class IndexView(TemplateView):
 #     return render(request, 'dogs/category_list.html', context)
 
 
-class CategoryListView(ListView):
+class CategoryListView(LoginRequiredMixin, ListView):
     model = Category
     # context_data['category_pk'] = category_item.pk
     extra_context = {
@@ -62,12 +64,16 @@ class CategoryListView(ListView):
 #     return render(request, 'dogs/dogs.html', context)
 
 
-class DogListView(ListView):
+class DogListView(LoginRequiredMixin, ListView):
     model = Dog
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(category_id=self.kwargs.get('pk'), owner=self.request.user)
+        # Выбираем собак только одной породы
+        queryset = queryset.filter(category_id=self.kwargs.get('pk'),)
+        # Если пользователь не стафф, то ему показываются только его собаки, фильтруем еще раз
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(owner=self.request.user)
         return queryset
 
     # Переопределяем экстра-контекст, так как у нас подставляются динамические данные
@@ -81,10 +87,11 @@ class DogListView(ListView):
         return context_data
 
 
-class DogCreateView(CreateView):
+class DogCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Dog
     form_class = DogForm
     # fields = ('name', 'category',)
+    permission_required = 'dogs.add_dog'  # Создаем разрешение для стаффа на создание собак
     success_url = reverse_lazy('dogs:categories')
 
     def form_valid(self, form):
@@ -95,15 +102,24 @@ class DogCreateView(CreateView):
         return super().form_valid(form)
 
 
-class CategoryDogCreateView(CreateView):
+class CategoryDogCreateView(LoginRequiredMixin, CreateView):
     model = Dog
     fields = ('name', 'category',)
     success_url = reverse_lazy('dogs:categories')
 
 
-class DogUpdateView(UpdateView):
+class DogUpdateView(LoginRequiredMixin, UpdateView):
     model = Dog
     form_class = DogForm
+
+    def get_object(self, queryset=None):
+        """Получаем объект собаки для редактирования и проверяем, что ее владелец,
+         тот, который сейчас вошел в систему и тот, кто - сотрудник"""
+        self.object = super().get_object(queryset)
+        if self.object.owner != self.request.user and not self.request.user.is_staff:
+            raise Http404
+
+        return self.object
 
     # Переопределяем страницу в случае успешного обновления
     def get_success_url(self):
@@ -132,6 +148,6 @@ class DogUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-class DogDeleteView(DeleteView):
+class DogDeleteView(LoginRequiredMixin, DeleteView):
     model = Dog
     success_url = reverse_lazy('dogs:categories')

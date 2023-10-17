@@ -4,9 +4,11 @@
 {% block content %}
 
 <div class="row">
-    <div class="col-12">
-        <a class="btn btn-primary" href="{% url 'dogs:category_dog_create' category_pk %}">Добавить собаку</a>
-    </div>
+    {% if perms.dogs.add_dog %}
+        <div class="col-12">
+            <a class="btn btn-primary" href="{% url 'dogs:category_dog_create' category_pk %}">Добавить собаку</a>
+        </div>
+    {% endif %}
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
         {% for object in object_list %}
         <div class="col-md-4">
