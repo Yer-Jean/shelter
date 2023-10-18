@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.cache import cache
 from django.forms import inlineformset_factory
 from django.http import Http404
 from django.shortcuts import render
@@ -7,6 +9,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, T
 
 from dogs.forms import DogForm, ParentForm
 from dogs.models import Category, Dog, Parent
+from dogs.services import get_categories_cache
 
 
 # def index(request):
@@ -44,6 +47,12 @@ class CategoryListView(LoginRequiredMixin, ListView):
         'title': 'Питомник - все наши породы',
         # 'category_pk': pk
     }
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        # работу с кэшем вынесли в сервисную прослойку - services.py
+        context_data['object_list'] = get_categories_cache()
+        return context_data
 
     # def get_context_data(self, *args, **kwargs):
     #     context_data = super().get_context_data(*args, **kwargs)
