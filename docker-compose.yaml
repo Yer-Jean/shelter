@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
+
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_data:/var/lib/postgresql/data/pgdata
+    ports:
+      - '5433:5432'
+#      Строка ниже вводится для того, чтобы БД гарантированно поднялась перед запуском app
+#      Это дополнение команде depends_on
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+#    tty дает нам подключаться к терминалу и будет ждать выполнения команды следующей за ней
+#    описание дано в видео "Практика 2. Работа с Redis"
+    tty: true
+#    Строку с migration надо запускать один раз после создания БД (см файл settings.py)
+#    command: python manage.py migrate && python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
+#    Строка volumes ниже нужна для того, чтобы изменения в коде отображались в контейнере
+#    Лучше ее вносить после выполнения команды docker-compose build
+    volumes:
+      - .:/code
+    ports:
+      - '8000:8000'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  celery:
+    build: .
+    tty: true
+    command: celery -A config worker -l INFO
+    depends_on:
+      - redis
+      - app
+
+  celery_beat:
+    build: .
+    tty: true
+    command: celery -A config beat -l INFO
+#    command: celery -A config beat -l INFO -S django
+    depends_on:
+      - redis
+      - app
+
+volumes:
+  pg_data:

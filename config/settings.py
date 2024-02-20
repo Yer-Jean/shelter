@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'django_celery_beat',  # Внесли это для настройки docker-compose
+
     'dogs',
     'users',
 ]
@@ -84,11 +87,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': 'localhost',
+        # 'HOST': 'localhost',
         'NAME': 'shelter',  # Название базы данных
         'USER': 'postgres',
-        'PASSWORD': '15679',
-        'PORT': '5432'
+        'PASSWORD': 'mysecretpassword',
+        # 'PORT': '5432',
+        # Ниже изменения для docker-compose
+        'HOST': 'db',
+        # После выполнения команды docker-compose build и ДО docker-compose up
+        # нужно выполнить команду для создания БД:
+        # docker-compose exec db psql -U postgres
+        # и там: create database shelter;
+        # \q для выхода из psql
     }
 }
 
@@ -147,15 +157,18 @@ LOGIN_URL = '/users/'
 
 EMAIL_HOST = 'smtp.yandex.ru'
 EMAIL_PORT = 465
-EMAIL_HOST_USER = os.getenv('fuckup@oscarbot.ru')
-EMAIL_HOST_PASSWORD = os.getenv('AsTSNVv7pun9')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = True
 
 # Сделано для того, чтобы получить значение True, иначе прилетает строковое значение
 CACHE_ENABLE = os.getenv('CACHE_ENABLE') == '1'
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": os.getenv('CACHE_LOCATION'),
+if CACHE_ENABLE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": os.getenv('CACHE_LOCATION'),
+        }
     }
-}
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'
